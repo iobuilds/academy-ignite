@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface RegistrationModalProps {
   isOpen: boolean;
@@ -31,13 +32,43 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast.success('Registration successful! We will contact you soon.');
-    setFormData({ name: '', email: '', phone: '', course: '' });
-    setIsSubmitting(false);
-    onClose();
+    try {
+      // Save registration to database
+      const { error: dbError } = await supabase
+        .from('registrations')
+        .insert({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          course: formData.course,
+        });
+
+      if (dbError) {
+        console.error('Database error:', dbError);
+        throw new Error('Failed to save registration');
+      }
+
+      // Send confirmation email
+      const { error: emailError } = await supabase.functions.invoke('send-registration-email', {
+        body: formData,
+      });
+
+      if (emailError) {
+        console.error('Email error:', emailError);
+        // Don't throw - registration is saved, just email failed
+        toast.success('Registration successful! We will contact you soon.');
+      } else {
+        toast.success('Registration successful! Check your email for confirmation.');
+      }
+      
+      setFormData({ name: '', email: '', phone: '', course: '' });
+      onClose();
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error('Registration failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

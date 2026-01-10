@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Target, Lightbulb, Users, Award } from 'lucide-react';
+import lecturerImage from '@/assets/lecturer.png';
 
 const values = [
   {
@@ -28,6 +29,30 @@ export default function About() {
   return (
     <section id="about" className="py-24 bg-secondary/30">
       <div className="container mx-auto px-4">
+        {/* Instructor Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <h2 className="font-display text-3xl md:text-5xl font-bold mb-8">
+            Meet Your <span className="text-gradient">Instructor</span>
+          </h2>
+          <div className="flex flex-col items-center">
+            <div className="w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden shadow-xl mb-6 border-4 border-primary/20">
+              <img 
+                src={lecturerImage} 
+                alt="Instructor" 
+                className="w-full h-full object-cover object-top"
+              />
+            </div>
+            <h3 className="font-display text-2xl font-bold mb-2">Embedded Systems Engineer</h3>
+            <p className="text-primary font-semibold text-lg">at IPbuilds LLC</p>
+          </div>
+        </motion.div>
+
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
