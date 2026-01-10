@@ -1,12 +1,29 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from 'react';
+import Header from '@/components/Header';
+import Hero from '@/components/Hero';
+import Courses from '@/components/Courses';
+import About from '@/components/About';
+import Footer from '@/components/Footer';
+import RegistrationModal from '@/components/RegistrationModal';
 
 const Index = () => {
+  const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
+
+  const handleRegisterClick = () => {
+    setIsRegistrationOpen(true);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen">
+      <Header onRegisterClick={handleRegisterClick} />
+      <Hero onRegisterClick={handleRegisterClick} />
+      <Courses onRegisterClick={handleRegisterClick} />
+      <About />
+      <Footer />
+      <RegistrationModal 
+        isOpen={isRegistrationOpen} 
+        onClose={() => setIsRegistrationOpen(false)} 
+      />
     </div>
   );
 };
