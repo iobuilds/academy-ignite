@@ -5,6 +5,7 @@ import Courses from '@/components/Courses';
 import About from '@/components/About';
 import Footer from '@/components/Footer';
 import RegistrationModal from '@/components/RegistrationModal';
+import AnnouncementBar from '@/components/AnnouncementBar';
 
 const Index = () => {
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
@@ -15,6 +16,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
+      <AnnouncementBar />
       <Header onRegisterClick={handleRegisterClick} />
       <Hero onRegisterClick={handleRegisterClick} />
       <Courses onRegisterClick={handleRegisterClick} />

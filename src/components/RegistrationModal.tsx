@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,16 +17,24 @@ import { supabase } from '@/integrations/supabase/client';
 interface RegistrationModalProps {
   isOpen: boolean;
   onClose: () => void;
+  preselectedCourse?: string;
 }
 
-export default function RegistrationModal({ isOpen, onClose }: RegistrationModalProps) {
+export default function RegistrationModal({ isOpen, onClose, preselectedCourse }: RegistrationModalProps) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    course: '',
+    course: preselectedCourse || '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Update course when preselectedCourse changes
+  React.useEffect(() => {
+    if (preselectedCourse) {
+      setFormData(prev => ({ ...prev, course: preselectedCourse }));
+    }
+  }, [preselectedCourse]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
