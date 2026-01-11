@@ -22,6 +22,22 @@ const courseNames: Record<string, string> = {
   "product-development": "Product Development Bootcamp",
 };
 
+// HTML escape function to prevent XSS
+const escapeHtml = (str: string): string => {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
+
+// Validate email format
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -31,10 +47,52 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { name, email, phone, course }: RegistrationEmailRequest = await req.json();
     
-    console.log("Sending registration confirmation email to:", email);
-    console.log("Registration details:", { name, phone, course });
+    // Input validation
+    if (!name || !email || !phone || !course) {
+      console.error("Missing required fields");
+      return new Response(
+        JSON.stringify({ error: "Missing required fields" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
-    const courseName = courseNames[course] || course;
+    // Validate email format
+    if (!isValidEmail(email)) {
+      console.error("Invalid email format:", email);
+      return new Response(
+        JSON.stringify({ error: "Invalid email format" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Validate course against allowed values
+    if (!courseNames[course]) {
+      console.error("Invalid course selection:", course);
+      return new Response(
+        JSON.stringify({ error: "Invalid course selection" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Validate length limits
+    if (name.length > 100 || phone.length > 20 || email.length > 255) {
+      console.error("Input exceeds length limits");
+      return new Response(
+        JSON.stringify({ error: "Input exceeds length limits" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    console.log("Sending registration confirmation email to:", email);
+    console.log("Registration details:", { name: name.substring(0, 20), course });
+
+    const courseName = courseNames[course];
+    
+    // Sanitize all user inputs for HTML
+    const safeName = escapeHtml(name);
+    const safeEmail = escapeHtml(email);
+    const safePhone = escapeHtml(phone);
+    const safeCourseName = escapeHtml(courseName);
 
     const emailResponse = await resend.emails.send({
       from: "IO Builds Academy <onboarding@resend.dev>",
@@ -59,13 +117,13 @@ const handler = async (req: Request): Promise<Response> => {
               <h1>Welcome to IO Builds Academy!</h1>
             </div>
             <div class="content">
-              <h2>Hello ${name}! 👋</h2>
+              <h2>Hello ${safeName}! 👋</h2>
               <p>Thank you for registering with IO Builds Academy. We're excited to have you join us!</p>
               
               <div class="highlight">
-                <strong>Course:</strong> ${courseName}<br>
-                <strong>Contact Email:</strong> ${email}<br>
-                <strong>Phone:</strong> ${phone}
+                <strong>Course:</strong> ${safeCourseName}<br>
+                <strong>Contact Email:</strong> ${safeEmail}<br>
+                <strong>Phone:</strong> ${safePhone}
               </div>
               
               <p>Our team will contact you shortly with more details about your selected course, including:</p>

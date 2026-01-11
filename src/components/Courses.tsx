@@ -1,45 +1,42 @@
 import { motion } from 'framer-motion';
-import { Clock, Users, ArrowRight } from 'lucide-react';
+import { Clock, Users, ArrowRight, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import courseIot from '@/assets/course-iot.png';
-import courseEmbedded from '@/assets/course-embedded.png';
-import courseProduct from '@/assets/course-product.png';
+import { Link } from 'react-router-dom';
+import { useCourses } from '@/hooks/useCourses';
 
 interface CoursesProps {
   onRegisterClick: () => void;
 }
 
-const courses = [
-  {
-    id: 1,
-    title: 'IoT and Robotics',
-    description: 'A fun and interactive program designed for young innovators aged 4-10. Learn basics of robotics, sensors, and build exciting IoT projects.',
-    image: courseIot,
-    duration: '12 weeks',
-    ageGroup: 'Ages 4-10',
-    highlights: ['Hands-on robot building', 'Basic coding concepts', 'Sensor exploration'],
-  },
-  {
-    id: 2,
-    title: 'Embedded Systems Bootcamp',
-    description: 'Master the fundamentals of embedded systems programming. From microcontrollers to real-world applications, build industry-ready skills.',
-    image: courseEmbedded,
-    duration: '16 weeks',
-    ageGroup: 'All ages',
-    highlights: ['Microcontroller programming', 'Hardware interfacing', 'Real-time systems'],
-  },
-  {
-    id: 3,
-    title: 'Product Development Bootcamp',
-    description: 'Transform your ideas into market-ready products. Learn prototyping, manufacturing, and the complete product lifecycle.',
-    image: courseProduct,
-    duration: '14 weeks',
-    ageGroup: 'All ages',
-    highlights: ['Rapid prototyping', '3D printing & CAD', 'Market validation'],
-  },
-];
-
 export default function Courses({ onRegisterClick }: CoursesProps) {
+  const { data: courses, isLoading } = useCourses();
+
+  if (isLoading) {
+    return (
+      <section id="courses" className="py-24 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="font-display text-3xl md:text-5xl font-bold mb-4">
+              Our <span className="text-gradient">Courses</span>
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-card rounded-2xl overflow-hidden shadow-card animate-pulse">
+                <div className="h-48 bg-muted" />
+                <div className="p-6 space-y-4">
+                  <div className="h-6 bg-muted rounded w-3/4" />
+                  <div className="h-4 bg-muted rounded w-full" />
+                  <div className="h-4 bg-muted rounded w-2/3" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section id="courses" className="py-24 bg-background">
       <div className="container mx-auto px-4">
@@ -59,7 +56,7 @@ export default function Courses({ onRegisterClick }: CoursesProps) {
         </motion.div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {courses.map((course, index) => (
+          {courses?.map((course, index) => (
             <motion.div
               key={course.id}
               initial={{ opacity: 0, y: 30 }}
@@ -68,22 +65,31 @@ export default function Courses({ onRegisterClick }: CoursesProps) {
               transition={{ duration: 0.5, delay: index * 0.1 }}
               className="group bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-300"
             >
-              <div className="relative overflow-hidden">
-                <img
-                  src={course.image}
-                  alt={course.title}
-                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium">
-                  {course.ageGroup}
+              <Link to={`/courses/${course.id}`} className="block">
+                <div className="relative overflow-hidden">
+                  <img
+                    src={course.cardImage}
+                    alt={course.title}
+                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium">
+                    {course.age_group}
+                  </div>
+                  {course.is_upcoming && (
+                    <div className="absolute top-4 left-4 bg-accent text-accent-foreground px-3 py-1 rounded-full text-xs font-bold animate-pulse">
+                      🔥 Upcoming
+                    </div>
+                  )}
                 </div>
-              </div>
+              </Link>
 
               <div className="p-6">
-                <h3 className="font-display text-xl font-bold mb-3 group-hover:text-primary transition-colors">
-                  {course.title}
-                </h3>
-                <p className="text-muted-foreground text-sm mb-4 leading-relaxed">
+                <Link to={`/courses/${course.id}`}>
+                  <h3 className="font-display text-xl font-bold mb-3 group-hover:text-primary transition-colors">
+                    {course.title}
+                  </h3>
+                </Link>
+                <p className="text-muted-foreground text-sm mb-4 leading-relaxed line-clamp-2">
                   {course.description}
                 </p>
 
@@ -94,12 +100,28 @@ export default function Courses({ onRegisterClick }: CoursesProps) {
                   </div>
                   <div className="flex items-center gap-1">
                     <Users size={16} />
-                    Small groups
+                    {course.registeredCount} registered
+                  </div>
+                </div>
+
+                {/* Verified students count */}
+                {course.verifiedCount > 0 && (
+                  <div className="flex items-center gap-2 mb-4 text-sm bg-accent/10 text-accent rounded-lg px-3 py-2">
+                    <UserCheck size={16} />
+                    <span className="font-medium">{course.verifiedCount} students enrolled</span>
+                  </div>
+                )}
+
+                {/* Price */}
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <span className="text-2xl font-display font-bold text-primary">${course.price}</span>
+                    <span className="text-muted-foreground text-sm ml-1">USD</span>
                   </div>
                 </div>
 
                 <ul className="space-y-2 mb-6">
-                  {course.highlights.map((highlight, i) => (
+                  {course.highlights.slice(0, 3).map((highlight, i) => (
                     <li key={i} className="flex items-center gap-2 text-sm">
                       <div className="w-1.5 h-1.5 rounded-full bg-accent" />
                       {highlight}
@@ -107,14 +129,28 @@ export default function Courses({ onRegisterClick }: CoursesProps) {
                   ))}
                 </ul>
 
-                <Button 
-                  variant="outline" 
-                  className="w-full group/btn"
-                  onClick={onRegisterClick}
-                >
-                  Enroll Now
-                  <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    asChild
+                  >
+                    <Link to={`/courses/${course.id}`}>
+                      View Details
+                      <ArrowRight size={16} className="ml-1" />
+                    </Link>
+                  </Button>
+                  <Button 
+                    variant="hero" 
+                    className="flex-1"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onRegisterClick();
+                    }}
+                  >
+                    Enroll Now
+                  </Button>
+                </div>
               </div>
             </motion.div>
           ))}
