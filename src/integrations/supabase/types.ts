@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      courses: {
+        Row: {
+          age_group: string
+          created_at: string
+          curriculum: Json | null
+          description: string
+          duration: string
+          faq: Json | null
+          highlights: string[] | null
+          id: string
+          is_upcoming: boolean | null
+          price: number
+          schedule: Json | null
+          start_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          age_group: string
+          created_at?: string
+          curriculum?: Json | null
+          description: string
+          duration: string
+          faq?: Json | null
+          highlights?: string[] | null
+          id: string
+          is_upcoming?: boolean | null
+          price?: number
+          schedule?: Json | null
+          start_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          age_group?: string
+          created_at?: string
+          curriculum?: Json | null
+          description?: string
+          duration?: string
+          faq?: Json | null
+          highlights?: string[] | null
+          id?: string
+          is_upcoming?: boolean | null
+          price?: number
+          schedule?: Json | null
+          start_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       registrations: {
         Row: {
           course: string
@@ -21,6 +72,7 @@ export type Database = {
           email: string
           id: string
           name: string
+          payment_verified: boolean
           phone: string
         }
         Insert: {
@@ -29,6 +81,7 @@ export type Database = {
           email: string
           id?: string
           name: string
+          payment_verified?: boolean
           phone: string
         }
         Update: {
@@ -37,6 +90,7 @@ export type Database = {
           email?: string
           id?: string
           name?: string
+          payment_verified?: boolean
           phone?: string
         }
         Relationships: []
