@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import logo from '@/assets/logo.png';
 
 interface HeaderProps {
@@ -10,12 +12,14 @@ interface HeaderProps {
 
 export default function Header({ onRegisterClick }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const navItems = [
-    { label: 'Home', href: '#home' },
-    { label: 'Courses', href: '#courses' },
-    { label: 'About', href: '#about' },
-    { label: 'Contact', href: '#contact' },
+    { label: 'Home', href: '/' },
+    { label: 'Courses', href: '/#courses' },
+    { label: 'About', href: '/#about' },
+    { label: 'Contact', href: '/#contact' },
   ];
 
   return (
@@ -27,24 +31,33 @@ export default function Header({ onRegisterClick }: HeaderProps) {
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
-          <a href="#home" className="flex items-center">
+          <Link to="/" className="flex items-center">
             <img src={logo} alt="IO Builds Academy" className="h-10 md:h-12" />
-          </a>
+          </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
             {navItems.map((item) => (
-              <a
+              <Link
                 key={item.label}
-                href={item.href}
+                to={item.href}
                 className="text-muted-foreground hover:text-primary transition-colors font-medium"
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
-            <Button variant="hero" size="lg" onClick={onRegisterClick}>
-              Register Now
-            </Button>
+            {user ? (
+              <Button variant="hero" size="lg" asChild>
+                <Link to="/dashboard">
+                  <User size={18} className="mr-2" />
+                  Dashboard
+                </Link>
+              </Button>
+            ) : (
+              <Button variant="hero" size="lg" onClick={onRegisterClick}>
+                Register Now
+              </Button>
+            )}
           </nav>
 
           {/* Mobile Menu Button */}
@@ -66,21 +79,27 @@ export default function Header({ onRegisterClick }: HeaderProps) {
           >
             <div className="flex flex-col gap-4">
               {navItems.map((item) => (
-                <a
+                <Link
                   key={item.label}
-                  href={item.href}
+                  to={item.href}
                   className="text-muted-foreground hover:text-primary transition-colors font-medium py-2"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item.label}
-                </a>
+                </Link>
               ))}
-              <Button variant="hero" size="lg" onClick={() => {
-                onRegisterClick();
-                setIsMenuOpen(false);
-              }}>
-                Register Now
-              </Button>
+              {user ? (
+                <Button variant="hero" size="lg" asChild onClick={() => setIsMenuOpen(false)}>
+                  <Link to="/dashboard">Dashboard</Link>
+                </Button>
+              ) : (
+                <Button variant="hero" size="lg" onClick={() => {
+                  onRegisterClick();
+                  setIsMenuOpen(false);
+                }}>
+                  Register Now
+                </Button>
+              )}
             </div>
           </motion.nav>
         )}
