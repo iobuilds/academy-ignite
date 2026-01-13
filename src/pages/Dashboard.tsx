@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { BookOpen, Clock, CheckCircle, Play, ArrowRight, LogOut, User, GraduationCap } from 'lucide-react';
+import { BookOpen, Clock, CheckCircle, Play, ArrowRight, LogOut, User, GraduationCap, AlertCircle, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,6 +20,13 @@ interface Enrollment {
   enrolled_at: string;
   started_at: string | null;
   completed_at: string | null;
+  registration_id: string | null;
+}
+
+interface Registration {
+  id: string;
+  payment_verified: boolean;
+  course: string;
 }
 
 interface LessonProgress {
@@ -29,7 +37,7 @@ interface LessonProgress {
 }
 
 export default function Dashboard() {
-  const { user, isLoading: authLoading, signOut } = useAuth();
+  const { user, isLoading: authLoading, signOut, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { data: courses } = useCourses();
 
@@ -50,6 +58,20 @@ export default function Dashboard() {
         .eq('user_id', user!.id);
       if (error) throw error;
       return data as Enrollment[];
+    },
+    enabled: !!user,
+  });
+
+  // Fetch user registrations to check payment status
+  const { data: registrations } = useQuery({
+    queryKey: ['user-registrations', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('registrations')
+        .select('id, payment_verified, course')
+        .eq('user_id', user!.id);
+      if (error) throw error;
+      return data as Registration[];
     },
     enabled: !!user,
   });
@@ -93,9 +115,22 @@ export default function Dashboard() {
 
   if (!user) return null;
 
-  const enrolledCourseIds = enrollments?.map((e) => e.course_id) || [];
-  const enrolledCourses = courses?.filter((c) => enrolledCourseIds.includes(c.id)) || [];
-  const availableCourses = courses?.filter((c) => !enrolledCourseIds.includes(c.id)) || [];
+  // Get verified enrollments only (payment_verified = true)
+  const verifiedCourseIds = registrations
+    ?.filter(r => r.payment_verified)
+    .map(r => r.course) || [];
+  
+  const pendingCourseIds = registrations
+    ?.filter(r => !r.payment_verified)
+    .map(r => r.course) || [];
+
+  const enrolledCourses = courses?.filter((c) => verifiedCourseIds.includes(c.id)) || [];
+  const pendingCourses = courses?.filter((c) => pendingCourseIds.includes(c.id)) || [];
+  const availableCourses = courses?.filter((c) => 
+    !verifiedCourseIds.includes(c.id) && 
+    !pendingCourseIds.includes(c.id) &&
+    c.registration_open
+  ) || [];
 
   const getProgressForCourse = (courseId: string, totalWeeks: number) => {
     const courseProgress = lessonProgress?.filter((p) => p.course_id === courseId) || [];
@@ -137,10 +172,23 @@ export default function Dashboard() {
                   <p className="text-muted-foreground">{user.email}</p>
                 </div>
               </div>
-              <Button variant="outline" onClick={handleSignOut}>
-                <LogOut size={18} className="mr-2" />
-                Sign Out
-              </Button>
+              <div className="flex gap-2">
+                {isAdmin && (
+                  <Button variant="outline" asChild>
+                    <Link to="/admin">Admin Dashboard</Link>
+                  </Button>
+                )}
+                <Button variant="outline" asChild>
+                  <Link to="/profile">
+                    <Settings size={18} className="mr-2" />
+                    Settings
+                  </Link>
+                </Button>
+                <Button variant="outline" onClick={handleSignOut}>
+                  <LogOut size={18} className="mr-2" />
+                  Sign Out
+                </Button>
+              </div>
             </div>
           </motion.div>
 
@@ -190,6 +238,55 @@ export default function Dashboard() {
             </motion.div>
           </div>
 
+          {/* Pending Courses */}
+          {pendingCourses.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+              className="mb-12"
+            >
+              <h2 className="font-display text-2xl font-bold mb-6 flex items-center gap-2">
+                <AlertCircle className="text-yellow-500" size={24} />
+                Pending Verification
+              </h2>
+
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mb-4">
+                <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                  Your payment is being verified. You'll have access to these courses once an admin approves your payment.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {pendingCourses.map((course) => (
+                  <div
+                    key={course.id}
+                    className="bg-card rounded-2xl overflow-hidden shadow-card opacity-75"
+                  >
+                    <div className="relative">
+                      <img
+                        src={course.cardImage}
+                        alt={course.title}
+                        className="w-full h-40 object-cover grayscale"
+                      />
+                      <div className="absolute top-3 right-3">
+                        <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-300">
+                          ⏳ Pending
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="p-5">
+                      <h3 className="font-display font-bold text-lg mb-2">{course.title}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Awaiting payment verification...
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.section>
+          )}
+
           {/* Enrolled Courses */}
           <motion.section
             initial={{ opacity: 0, y: 20 }}
@@ -205,13 +302,17 @@ export default function Dashboard() {
             {enrolledCourses.length === 0 ? (
               <div className="bg-card rounded-2xl p-8 text-center shadow-card">
                 <GraduationCap className="mx-auto text-muted-foreground mb-4" size={48} />
-                <h3 className="font-display text-xl font-bold mb-2">No courses yet</h3>
+                <h3 className="font-display text-xl font-bold mb-2">No verified courses yet</h3>
                 <p className="text-muted-foreground mb-4">
-                  Start your learning journey by enrolling in a course
+                  {pendingCourses.length > 0 
+                    ? 'Your registrations are pending payment verification.'
+                    : 'Start your learning journey by enrolling in a course'}
                 </p>
-                <Button variant="hero" asChild>
-                  <Link to="/#courses">Browse Courses</Link>
-                </Button>
+                {pendingCourses.length === 0 && (
+                  <Button variant="hero" asChild>
+                    <Link to="/courses">Browse Courses</Link>
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -231,19 +332,9 @@ export default function Dashboard() {
                           className="w-full h-40 object-cover"
                         />
                         <div className="absolute top-3 right-3">
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                            enrollment?.status === 'completed'
-                              ? 'bg-accent text-accent-foreground'
-                              : enrollment?.status === 'in_progress'
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted text-muted-foreground'
-                          }`}>
-                            {enrollment?.status === 'completed'
-                              ? 'Completed'
-                              : enrollment?.status === 'in_progress'
-                              ? 'In Progress'
-                              : 'Enrolled'}
-                          </span>
+                          <Badge variant="default" className="bg-green-500">
+                            ✓ Verified
+                          </Badge>
                         </div>
                       </div>
                       <div className="p-5">

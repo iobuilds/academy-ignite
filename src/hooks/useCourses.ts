@@ -32,6 +32,7 @@ export interface Course {
   faq: FAQItem[];
   start_date: string | null;
   is_upcoming: boolean;
+  registration_open: boolean;
   created_at: string;
   updated_at: string;
   cardImage: string;
@@ -72,6 +73,7 @@ export function useCourses() {
         curriculum: course.curriculum as unknown as CurriculumItem[],
         schedule: course.schedule as unknown as Schedule,
         faq: course.faq as unknown as FAQItem[],
+        registration_open: course.registration_open ?? true,
         cardImage: courseImages[course.id]?.card || '',
         heroImage: courseImages[course.id]?.hero || '',
         registeredCount: counts[course.id]?.registered || 0,
@@ -113,6 +115,7 @@ export function useCourse(courseId: string) {
         curriculum: course.curriculum as unknown as CurriculumItem[],
         schedule: course.schedule as unknown as Schedule,
         faq: course.faq as unknown as FAQItem[],
+        registration_open: course.registration_open ?? true,
         cardImage: courseImages[course.id]?.card || '',
         heroImage: courseImages[course.id]?.hero || '',
         registeredCount,

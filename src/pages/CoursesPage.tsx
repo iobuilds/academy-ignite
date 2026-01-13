@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Users, ArrowRight, UserCheck, Filter, Search } from 'lucide-react';
+import { Clock, Users, ArrowRight, UserCheck, Filter, Search, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { useCourses } from '@/hooks/useCourses';
+import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import RegistrationModal from '@/components/RegistrationModal';
 
 export default function CoursesPage() {
   const { data: courses, isLoading } = useCourses();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAge, setSelectedAge] = useState<string | null>(null);
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
@@ -21,7 +23,10 @@ export default function CoursesPage() {
     ? [...new Set(courses.map(c => c.age_group))]
     : [];
 
-  const filteredCourses = courses?.filter(course => {
+  // Only show courses with registration_open = true (unless enrolled)
+  const openCourses = courses?.filter(course => course.registration_open) || [];
+
+  const filteredCourses = openCourses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           course.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesAge = !selectedAge || course.age_group === selectedAge;
@@ -110,9 +115,11 @@ export default function CoursesPage() {
                 </div>
               ))}
             </div>
-          ) : filteredCourses?.length === 0 ? (
+          ) : filteredCourses.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-muted-foreground text-lg">No courses found matching your criteria.</p>
+              <Lock size={48} className="mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground text-lg mb-2">No courses available for registration at the moment.</p>
+              <p className="text-sm text-muted-foreground">Check back soon for upcoming courses!</p>
               <Button
                 variant="outline"
                 className="mt-4"
@@ -126,7 +133,7 @@ export default function CoursesPage() {
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredCourses?.map((course, index) => (
+              {filteredCourses.map((course, index) => (
                 <motion.div
                   key={course.id}
                   initial={{ opacity: 0, y: 30 }}
@@ -150,6 +157,9 @@ export default function CoursesPage() {
                           🔥 Upcoming
                         </div>
                       )}
+                      <div className="absolute bottom-4 left-4 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                        ✓ Registration Open
+                      </div>
                     </div>
                   </Link>
 
