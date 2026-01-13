@@ -68,6 +68,7 @@ export type Database = {
           id: string
           is_upcoming: boolean | null
           price: number
+          registration_open: boolean
           schedule: Json | null
           start_date: string | null
           title: string
@@ -84,6 +85,7 @@ export type Database = {
           id: string
           is_upcoming?: boolean | null
           price?: number
+          registration_open?: boolean
           schedule?: Json | null
           start_date?: string | null
           title: string
@@ -100,6 +102,7 @@ export type Database = {
           id?: string
           is_upcoming?: boolean | null
           price?: number
+          registration_open?: boolean
           schedule?: Json | null
           start_date?: string | null
           title?: string
@@ -239,6 +242,7 @@ export type Database = {
           final_price: number | null
           id: string
           name: string
+          payment_slip_url: string | null
           payment_verified: boolean
           phone: string
           terms_accepted: boolean | null
@@ -253,6 +257,7 @@ export type Database = {
           final_price?: number | null
           id?: string
           name: string
+          payment_slip_url?: string | null
           payment_verified?: boolean
           phone: string
           terms_accepted?: boolean | null
@@ -267,6 +272,7 @@ export type Database = {
           final_price?: number | null
           id?: string
           name?: string
+          payment_slip_url?: string | null
           payment_verified?: boolean
           phone?: string
           terms_accepted?: boolean | null

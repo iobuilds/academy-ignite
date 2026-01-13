@@ -11,7 +11,13 @@ import {
   MoreVertical,
   CheckCircle,
   XCircle,
-  ArrowLeft
+  ArrowLeft,
+  Eye,
+  ToggleLeft,
+  ToggleRight,
+  UserPlus,
+  Image as ImageIcon,
+  Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +42,12 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -53,6 +65,8 @@ interface Registration {
   coupon_code: string | null;
   discount_amount: number | null;
   final_price: number | null;
+  payment_slip_url: string | null;
+  user_id: string | null;
 }
 
 interface UserWithRole {
@@ -69,6 +83,7 @@ interface CourseStats {
   registrations: number;
   verified: number;
   revenue: number;
+  registration_open: boolean;
 }
 
 export default function AdminDashboard() {
@@ -81,6 +96,8 @@ export default function AdminDashboard() {
   const [courseStats, setCourseStats] = useState<CourseStats[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedSlip, setSelectedSlip] = useState<string | null>(null);
+  const [slipDialogOpen, setSlipDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -113,7 +130,7 @@ export default function AdminDashboard() {
       // Fetch courses with stats
       const { data: courses } = await supabase
         .from('courses')
-        .select('id, title, price');
+        .select('id, title, price, registration_open');
 
       if (courses && regs) {
         const stats = courses.map(course => {
@@ -127,6 +144,7 @@ export default function AdminDashboard() {
             registrations: courseRegs.length,
             verified: verified.length,
             revenue,
+            registration_open: course.registration_open ?? true,
           };
         });
         setCourseStats(stats);
@@ -141,10 +159,18 @@ export default function AdminDashboard() {
         .from('user_roles')
         .select('user_id, role');
 
+      // Get emails from registrations
+      const emailMap: Record<string, string> = {};
+      regs?.forEach(r => {
+        if (r.user_id) {
+          emailMap[r.user_id] = r.email;
+        }
+      });
+
       if (profiles) {
         const usersWithRoles = profiles.map(p => ({
           id: p.id,
-          email: '', // We don't have access to auth.users
+          email: emailMap[p.id] || '',
           display_name: p.display_name,
           created_at: p.created_at,
           role: roles?.find(r => r.user_id === p.id)?.role || 'user',
@@ -167,6 +193,15 @@ export default function AdminDashboard() {
 
       if (error) throw error;
 
+      // Also update enrollment status
+      const reg = registrations.find(r => r.id === id);
+      if (reg?.user_id) {
+        await supabase
+          .from('enrollments')
+          .update({ status: verified ? 'enrolled' : 'pending' })
+          .eq('registration_id', id);
+      }
+
       setRegistrations(prev =>
         prev.map(r => r.id === id ? { ...r, payment_verified: verified } : r)
       );
@@ -184,9 +219,34 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleToggleRegistration = async (courseId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('courses')
+        .update({ registration_open: !currentStatus })
+        .eq('id', courseId);
+
+      if (error) throw error;
+
+      setCourseStats(prev =>
+        prev.map(c => c.id === courseId ? { ...c, registration_open: !currentStatus } : c)
+      );
+
+      toast({
+        title: "Registration Status Updated",
+        description: `Registration is now ${!currentStatus ? 'open' : 'closed'} for this course.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleChangeRole = async (userId: string, newRole: string) => {
     try {
-      // Delete existing role and insert new one
       await supabase.from('user_roles').delete().eq('user_id', userId);
       const { error } = await supabase
         .from('user_roles')
@@ -211,12 +271,32 @@ export default function AdminDashboard() {
     }
   };
 
+  const viewPaymentSlip = async (url: string) => {
+    try {
+      const { data } = await supabase.storage
+        .from('payment_slips')
+        .createSignedUrl(url, 300); // 5 minute expiry
+      
+      if (data?.signedUrl) {
+        setSelectedSlip(data.signedUrl);
+        setSlipDialogOpen(true);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load payment slip",
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredRegistrations = registrations.filter(r =>
     r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.course.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const pendingRegistrations = registrations.filter(r => !r.payment_verified);
   const totalRevenue = courseStats.reduce((sum, c) => sum + c.revenue, 0);
   const totalRegistrations = registrations.length;
   const verifiedPayments = registrations.filter(r => r.payment_verified).length;
@@ -258,6 +338,16 @@ export default function AdminDashboard() {
               <p className="text-muted-foreground">Manage courses, users, and registrations</p>
             </div>
           </div>
+
+          {/* Pending Alert */}
+          {pendingRegistrations.length > 0 && (
+            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mb-6 flex items-center gap-3">
+              <Clock size={20} className="text-yellow-500" />
+              <span className="font-medium text-yellow-700 dark:text-yellow-300">
+                {pendingRegistrations.length} registration(s) pending payment verification
+              </span>
+            </div>
+          )}
 
           {/* Stats Cards */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -325,7 +415,12 @@ export default function AdminDashboard() {
           {/* Tabs */}
           <Tabs defaultValue="registrations" className="space-y-6">
             <TabsList className="grid w-full max-w-md grid-cols-3">
-              <TabsTrigger value="registrations">Registrations</TabsTrigger>
+              <TabsTrigger value="registrations">
+                Registrations
+                {pendingRegistrations.length > 0 && (
+                  <Badge variant="destructive" className="ml-2">{pendingRegistrations.length}</Badge>
+                )}
+              </TabsTrigger>
               <TabsTrigger value="courses">Courses</TabsTrigger>
               <TabsTrigger value="users">Users</TabsTrigger>
             </TabsList>
@@ -350,7 +445,7 @@ export default function AdminDashboard() {
                       <TableHead>Name</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Course</TableHead>
-                      <TableHead>Coupon</TableHead>
+                      <TableHead>Slip</TableHead>
                       <TableHead>Final Price</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Date</TableHead>
@@ -359,20 +454,27 @@ export default function AdminDashboard() {
                   </TableHeader>
                   <TableBody>
                     {filteredRegistrations.map((reg) => (
-                      <TableRow key={reg.id}>
+                      <TableRow key={reg.id} className={!reg.payment_verified ? 'bg-yellow-500/5' : ''}>
                         <TableCell className="font-medium">{reg.name}</TableCell>
                         <TableCell>{reg.email}</TableCell>
                         <TableCell>
                           <Badge variant="outline">{reg.course}</Badge>
                         </TableCell>
                         <TableCell>
-                          {reg.coupon_code ? (
-                            <Badge variant="secondary">{reg.coupon_code}</Badge>
+                          {reg.payment_slip_url ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => viewPaymentSlip(reg.payment_slip_url!)}
+                            >
+                              <ImageIcon size={16} className="mr-1" />
+                              View
+                            </Button>
                           ) : '-'}
                         </TableCell>
                         <TableCell>
                           ${reg.final_price || '-'}
-                          {reg.discount_amount && (
+                          {reg.discount_amount && reg.discount_amount > 0 && (
                             <span className="text-xs text-green-500 ml-1">
                               (-${reg.discount_amount})
                             </span>
@@ -425,7 +527,23 @@ export default function AdminDashboard() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="bg-card rounded-xl p-6 shadow-card"
                   >
-                    <h3 className="font-display font-bold text-lg mb-4">{course.title}</h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-display font-bold text-lg">{course.title}</h3>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleToggleRegistration(course.id, course.registration_open)}
+                      >
+                        {course.registration_open ? (
+                          <ToggleRight size={24} className="text-green-500" />
+                        ) : (
+                          <ToggleLeft size={24} className="text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
+                    <Badge variant={course.registration_open ? "default" : "secondary"} className="mb-4">
+                      {course.registration_open ? 'Registration Open' : 'Registration Closed'}
+                    </Badge>
                     <div className="space-y-3">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Registrations</span>
@@ -461,6 +579,7 @@ export default function AdminDashboard() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Display Name</TableHead>
+                      <TableHead>Email</TableHead>
                       <TableHead>Role</TableHead>
                       <TableHead>Joined</TableHead>
                       <TableHead></TableHead>
@@ -472,8 +591,11 @@ export default function AdminDashboard() {
                         <TableCell className="font-medium">
                           {u.display_name || 'No name'}
                         </TableCell>
+                        <TableCell>{u.email || '-'}</TableCell>
                         <TableCell>
-                          <Badge variant={u.role === 'admin' ? 'default' : 'secondary'}>
+                          <Badge
+                            variant={u.role === 'admin' ? 'default' : u.role === 'moderator' ? 'secondary' : 'outline'}
+                          >
                             {u.role}
                           </Badge>
                         </TableCell>
@@ -489,19 +611,19 @@ export default function AdminDashboard() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
-                                onClick={() => handleChangeRole(u.id, 'user')}
+                                onClick={() => handleChangeRole(u.id, 'admin')}
                               >
-                                Set as User
+                                Make Admin
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => handleChangeRole(u.id, 'moderator')}
                               >
-                                Set as Moderator
+                                Make Moderator
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => handleChangeRole(u.id, 'admin')}
+                                onClick={() => handleChangeRole(u.id, 'user')}
                               >
-                                Set as Admin
+                                Make User
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -511,12 +633,56 @@ export default function AdminDashboard() {
                   </TableBody>
                 </Table>
               </div>
+
+              {/* Demo Credentials */}
+              <div className="bg-muted/50 rounded-xl p-6 mt-6">
+                <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2">
+                  <UserPlus size={20} className="text-primary" />
+                  Demo Credentials
+                </h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="bg-card rounded-lg p-4">
+                    <Badge variant="default" className="mb-2">Admin</Badge>
+                    <p className="text-sm"><strong>Email:</strong> admin@iobuilds.com</p>
+                    <p className="text-sm"><strong>Password:</strong> Admin123!</p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      To create an admin, sign up with any email then change the role here.
+                    </p>
+                  </div>
+                  <div className="bg-card rounded-lg p-4">
+                    <Badge variant="outline" className="mb-2">User</Badge>
+                    <p className="text-sm"><strong>Email:</strong> user@iobuilds.com</p>
+                    <p className="text-sm"><strong>Password:</strong> User123!</p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Regular users can register for courses and view their enrolled courses.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
         </motion.div>
       </main>
 
       <Footer />
+
+      {/* Payment Slip Dialog */}
+      <Dialog open={slipDialogOpen} onOpenChange={setSlipDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Payment Slip</DialogTitle>
+          </DialogHeader>
+          {selectedSlip && (
+            <div className="flex justify-center">
+              <img 
+                src={selectedSlip} 
+                alt="Payment slip" 
+                className="max-h-[70vh] object-contain rounded-lg"
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

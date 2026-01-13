@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Tag, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { X, Tag, CheckCircle, AlertCircle, Loader2, Upload, FileImage } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,7 +15,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useCourses } from '@/hooks/useCourses';
 import { useValidateCoupon, calculateDiscount } from '@/hooks/useCoupon';
 
@@ -29,6 +29,7 @@ export default function RegistrationModal({ isOpen, onClose, preselectedCourse }
   const { user } = useAuth();
   const navigate = useNavigate();
   const { data: courses } = useCourses();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -40,11 +41,16 @@ export default function RegistrationModal({ isOpen, onClose, preselectedCourse }
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentSlip, setPaymentSlip] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const { data: coupon, isLoading: couponLoading, error: couponError } = useValidateCoupon(
     appliedCoupon || '',
     formData.course
   );
+
+  // Only show courses with registration_open = true
+  const openCourses = courses?.filter(c => c.registration_open) || [];
 
   // Update course when preselectedCourse changes
   useEffect(() => {
@@ -76,6 +82,21 @@ export default function RegistrationModal({ isOpen, onClose, preselectedCourse }
     setCouponCode('');
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size must be less than 5MB');
+        return;
+      }
+      if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+        toast.error('Please upload an image or PDF file');
+        return;
+      }
+      setPaymentSlip(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -84,7 +105,6 @@ export default function RegistrationModal({ isOpen, onClose, preselectedCourse }
       return;
     }
 
-    // Check if user is logged in
     if (!user) {
       toast.error('Please create an account or sign in first');
       onClose();
@@ -92,9 +112,28 @@ export default function RegistrationModal({ isOpen, onClose, preselectedCourse }
       return;
     }
 
+    if (!paymentSlip) {
+      toast.error('Please upload your bank transfer slip');
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
+      // Upload payment slip
+      const fileExt = paymentSlip.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      
+      setUploadProgress(30);
+      const { error: uploadError } = await supabase.storage
+        .from('payment_slips')
+        .upload(fileName, paymentSlip);
+
+      if (uploadError) {
+        throw new Error('Failed to upload payment slip');
+      }
+      setUploadProgress(60);
+
       // Save registration to database
       const { data: registration, error: dbError } = await supabase
         .from('registrations')
@@ -108,6 +147,8 @@ export default function RegistrationModal({ isOpen, onClose, preselectedCourse }
           discount_amount: discountAmount,
           final_price: finalPrice,
           terms_accepted: termsAccepted,
+          payment_slip_url: fileName,
+          payment_verified: false, // Pending until admin verifies
         })
         .select()
         .single();
@@ -116,15 +157,16 @@ export default function RegistrationModal({ isOpen, onClose, preselectedCourse }
         console.error('Database error:', dbError);
         throw new Error('Failed to save registration');
       }
+      setUploadProgress(80);
 
-      // Create enrollment
+      // Create enrollment with pending status
       const { error: enrollError } = await supabase
         .from('enrollments')
         .insert({
           user_id: user.id,
           course_id: formData.course,
           registration_id: registration.id,
-          status: 'enrolled',
+          status: 'pending', // Pending until payment verified
         });
 
       if (enrollError && !enrollError.message.includes('duplicate')) {
@@ -138,6 +180,7 @@ export default function RegistrationModal({ isOpen, onClose, preselectedCourse }
           .update({ current_uses: (coupon.current_uses || 0) + 1 })
           .eq('id', coupon.id);
       }
+      setUploadProgress(100);
 
       // Send confirmation email
       const { error: emailError } = await supabase.functions.invoke('send-registration-email', {
@@ -146,15 +189,16 @@ export default function RegistrationModal({ isOpen, onClose, preselectedCourse }
 
       if (emailError) {
         console.error('Email error:', emailError);
-        toast.success('Registration successful! We will contact you soon.');
-      } else {
-        toast.success('Registration successful! Check your email for confirmation.');
       }
+      
+      toast.success('Registration submitted! Your payment is pending verification.');
       
       setFormData({ name: '', email: user?.email || '', phone: '', course: '' });
       setCouponCode('');
       setAppliedCoupon(null);
       setTermsAccepted(false);
+      setPaymentSlip(null);
+      setUploadProgress(0);
       onClose();
       navigate('/dashboard');
     } catch (error) {
@@ -272,7 +316,7 @@ export default function RegistrationModal({ isOpen, onClose, preselectedCourse }
                     <SelectValue placeholder="Choose a course" />
                   </SelectTrigger>
                   <SelectContent>
-                    {courses?.map((course) => (
+                    {openCourses.map((course) => (
                       <SelectItem key={course.id} value={course.id}>
                         {course.title} - ${course.price}
                       </SelectItem>
@@ -332,6 +376,50 @@ export default function RegistrationModal({ isOpen, onClose, preselectedCourse }
                 </div>
               )}
 
+              {/* Bank Transfer Slip Upload */}
+              {formData.course && user && (
+                <div className="space-y-2">
+                  <Label>Bank Transfer Slip *</Label>
+                  <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    {paymentSlip ? (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <FileImage size={20} className="text-primary" />
+                          <span className="text-sm truncate max-w-[200px]">{paymentSlip.name}</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setPaymentSlip(null)}
+                        >
+                          <X size={16} />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Upload size={16} className="mr-2" />
+                        Upload Payment Slip
+                      </Button>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Upload your bank transfer receipt (Image or PDF, max 5MB)
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Price Summary */}
               {formData.course && user && (
                 <div className="bg-muted/50 rounded-lg p-4 space-y-2">
@@ -349,6 +437,9 @@ export default function RegistrationModal({ isOpen, onClose, preselectedCourse }
                     <span>Total</span>
                     <span className="text-primary">${finalPrice.toFixed(2)}</span>
                   </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    ⏳ Your registration will be pending until payment is verified by admin.
+                  </p>
                 </div>
               )}
 
@@ -362,10 +453,19 @@ export default function RegistrationModal({ isOpen, onClose, preselectedCourse }
                   />
                   <label htmlFor="terms" className="text-sm text-muted-foreground leading-tight cursor-pointer">
                     I agree to the{' '}
-                    <a href="#" className="text-primary hover:underline">Terms and Conditions</a>
+                    <Link to="/terms" className="text-primary hover:underline" onClick={onClose}>Terms and Conditions</Link>
                     {' '}and{' '}
                     <a href="#" className="text-primary hover:underline">Privacy Policy</a>
                   </label>
+                </div>
+              )}
+
+              {uploadProgress > 0 && uploadProgress < 100 && (
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div 
+                    className="bg-primary h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
                 </div>
               )}
 
@@ -374,9 +474,9 @@ export default function RegistrationModal({ isOpen, onClose, preselectedCourse }
                 variant="hero" 
                 size="lg" 
                 className="w-full mt-6"
-                disabled={isSubmitting || !user || !termsAccepted}
+                disabled={isSubmitting || !user || !termsAccepted || !paymentSlip}
               >
-                {isSubmitting ? 'Submitting...' : `Complete Registration - $${finalPrice.toFixed(2)}`}
+                {isSubmitting ? 'Submitting...' : `Submit Registration - $${finalPrice.toFixed(2)}`}
               </Button>
             </form>
           </motion.div>
