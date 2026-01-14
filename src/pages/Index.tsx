@@ -16,8 +16,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      <AnnouncementBar />
-      <Header onRegisterClick={handleRegisterClick} />
+      <div className="sticky top-0 z-50">
+        <AnnouncementBar />
+        <Header onRegisterClick={handleRegisterClick} />
+      </div>
       <Hero onRegisterClick={handleRegisterClick} />
       <Courses onRegisterClick={handleRegisterClick} />
       <About />

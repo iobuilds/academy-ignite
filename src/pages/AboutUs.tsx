@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Target, Lightbulb, Users, Award, MapPin, Mail, Phone, Heart, Zap, Globe } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import ContactForm from '@/components/ContactForm';
 import lecturerImage from '@/assets/lecturer.png';
 
 const values = [
@@ -218,7 +219,7 @@ export default function AboutUs() {
       </section>
 
       {/* Contact */}
-      <section className="py-20">
+      <section id="contact" className="py-20">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -229,48 +230,74 @@ export default function AboutUs() {
             <h2 className="font-display text-3xl md:text-5xl font-bold mb-4">
               Get in <span className="text-gradient">Touch</span>
             </h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Have questions about our courses? We're here to help!
+            </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="bg-card p-6 rounded-xl shadow-card text-center"
-            >
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <MapPin size={24} className="text-primary" />
-              </div>
-              <h3 className="font-display font-bold mb-2">Location</h3>
-              <p className="text-muted-foreground">Sri Lanka</p>
-            </motion.div>
+          <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+            {/* Contact Info */}
+            <div className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="bg-card p-6 rounded-xl shadow-card flex items-start gap-4"
+              >
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <MapPin size={24} className="text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold mb-1">Location</h3>
+                  <p className="text-muted-foreground">Sri Lanka</p>
+                  <p className="text-sm text-muted-foreground mt-1">Available for online students worldwide</p>
+                </div>
+              </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="bg-card p-6 rounded-xl shadow-card text-center"
-            >
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <Mail size={24} className="text-primary" />
-              </div>
-              <h3 className="font-display font-bold mb-2">Email</h3>
-              <p className="text-muted-foreground">info@iobuilds.com</p>
-            </motion.div>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 }}
+                className="bg-card p-6 rounded-xl shadow-card flex items-start gap-4"
+              >
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Mail size={24} className="text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold mb-1">Email</h3>
+                  <a href="mailto:info@iobuilds.com" className="text-primary hover:underline">
+                    info@iobuilds.com
+                  </a>
+                  <p className="text-sm text-muted-foreground mt-1">We respond within 24 hours</p>
+                </div>
+              </motion.div>
 
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+                className="bg-card p-6 rounded-xl shadow-card flex items-start gap-4"
+              >
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Globe size={24} className="text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold mb-1">Online Learning</h3>
+                  <p className="text-muted-foreground">Worldwide Access</p>
+                  <p className="text-sm text-muted-foreground mt-1">Learn from anywhere, anytime</p>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Contact Form */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="bg-card p-6 rounded-xl shadow-card text-center"
             >
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <Globe size={24} className="text-primary" />
-              </div>
-              <h3 className="font-display font-bold mb-2">Online</h3>
-              <p className="text-muted-foreground">Worldwide Access</p>
+              <ContactForm />
             </motion.div>
           </div>
         </div>
