@@ -17,7 +17,10 @@ import {
   ToggleRight,
   UserPlus,
   Image as ImageIcon,
-  Clock
+  Clock,
+  Plus,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -209,6 +212,34 @@ export default function AdminDashboard() {
       toast({
         title: verified ? "Payment Verified" : "Payment Unverified",
         description: `Registration has been ${verified ? 'verified' : 'unverified'}.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteCourse = async (courseId: string) => {
+    if (!confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('courses')
+        .delete()
+        .eq('id', courseId);
+
+      if (error) throw error;
+
+      setCourseStats(prev => prev.filter(c => c.id !== courseId));
+
+      toast({
+        title: "Course Deleted",
+        description: "The course has been successfully deleted.",
       });
     } catch (error: any) {
       toast({
@@ -414,7 +445,7 @@ export default function AdminDashboard() {
 
           {/* Tabs */}
           <Tabs defaultValue="registrations" className="space-y-6">
-            <TabsList className="grid w-full max-w-md grid-cols-3">
+            <TabsList className="grid w-full max-w-lg grid-cols-4">
               <TabsTrigger value="registrations">
                 Registrations
                 {pendingRegistrations.length > 0 && (
@@ -423,6 +454,10 @@ export default function AdminDashboard() {
               </TabsTrigger>
               <TabsTrigger value="courses">Courses</TabsTrigger>
               <TabsTrigger value="users">Users</TabsTrigger>
+              <TabsTrigger value="builder">
+                <Plus size={14} className="mr-1" />
+                New
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="registrations" className="space-y-4">
@@ -519,6 +554,13 @@ export default function AdminDashboard() {
             </TabsContent>
 
             <TabsContent value="courses" className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="font-display font-bold text-lg">Manage Courses</h3>
+                <Button onClick={() => navigate('/admin/courses/new')} className="gap-2">
+                  <Plus size={16} />
+                  Create Course
+                </Button>
+              </div>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {courseStats.map((course) => (
                   <motion.div
@@ -529,17 +571,26 @@ export default function AdminDashboard() {
                   >
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-display font-bold text-lg">{course.title}</h3>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleToggleRegistration(course.id, course.registration_open)}
-                      >
-                        {course.registration_open ? (
-                          <ToggleRight size={24} className="text-green-500" />
-                        ) : (
-                          <ToggleLeft size={24} className="text-muted-foreground" />
-                        )}
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => navigate(`/admin/courses/${course.id}/edit`)}
+                        >
+                          <Pencil size={16} className="text-muted-foreground" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleToggleRegistration(course.id, course.registration_open)}
+                        >
+                          {course.registration_open ? (
+                            <ToggleRight size={20} className="text-green-500" />
+                          ) : (
+                            <ToggleLeft size={20} className="text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
                     <Badge variant={course.registration_open ? "default" : "secondary"} className="mb-4">
                       {course.registration_open ? 'Registration Open' : 'Registration Closed'}
@@ -558,18 +609,43 @@ export default function AdminDashboard() {
                         <span className="font-bold text-primary">${course.revenue}</span>
                       </div>
                       <div className="pt-3 border-t">
-                        <div className="flex items-center gap-2">
-                          <TrendingUp size={16} className="text-accent" />
-                          <span className="text-sm">
-                            {course.registrations > 0 
-                              ? Math.round((course.verified / course.registrations) * 100) 
-                              : 0}% conversion rate
-                          </span>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <TrendingUp size={16} className="text-accent" />
+                            <span className="text-sm">
+                              {course.registrations > 0 
+                                ? Math.round((course.verified / course.registrations) * 100) 
+                                : 0}% conversion
+                            </span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteCourse(course.id)}
+                          >
+                            <Trash2 size={16} className="text-destructive" />
+                          </Button>
                         </div>
                       </div>
                     </div>
                   </motion.div>
                 ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="builder" className="space-y-4">
+              <div className="text-center py-12">
+                <div className="w-20 h-20 rounded-full bg-gradient-primary flex items-center justify-center mx-auto mb-6">
+                  <BookOpen size={40} className="text-primary-foreground" />
+                </div>
+                <h2 className="font-display text-2xl font-bold mb-4">Course Builder</h2>
+                <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+                  Create comprehensive courses with curriculum, schedules, FAQs, and more.
+                </p>
+                <Button size="lg" onClick={() => navigate('/admin/courses/new')} className="gap-2">
+                  <Plus size={20} />
+                  Create New Course
+                </Button>
               </div>
             </TabsContent>
 

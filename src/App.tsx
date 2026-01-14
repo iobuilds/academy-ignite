@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Learn from "./pages/Learn";
 import ProfileSettings from "./pages/ProfileSettings";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminCourseBuilder from "./pages/AdminCourseBuilder";
 import AboutUs from "./pages/AboutUs";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import CoursesPage from "./pages/CoursesPage";
@@ -34,6 +35,8 @@ const App = () => (
             <Route path="/learn/:courseId" element={<Learn />} />
             <Route path="/profile" element={<ProfileSettings />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/courses/new" element={<AdminCourseBuilder />} />
+            <Route path="/admin/courses/:courseId/edit" element={<AdminCourseBuilder />} />
             <Route path="/about" element={<AboutUs />} />
             <Route path="/terms" element={<TermsAndConditions />} />
             <Route path="*" element={<NotFound />} />

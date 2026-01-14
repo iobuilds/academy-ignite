@@ -13,7 +13,7 @@ export default function Hero({ onRegisterClick }: HeroProps) {
   const { user } = useAuth();
 
   return (
-    <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-hero pt-20">
+    <section id="home" className="relative min-h-[calc(100vh-5rem)] flex items-center justify-center overflow-hidden bg-gradient-hero">
       {/* Enhanced 3D Background */}
       <Scene3D />
       
