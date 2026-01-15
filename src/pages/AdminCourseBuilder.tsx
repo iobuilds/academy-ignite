@@ -116,49 +116,51 @@ export default function AdminCourseBuilder() {
   }, [loading, isAdmin, navigate, toast]);
 
   useEffect(() => {
+    const fetchCourse = async () => {
+      if (!courseId) return;
+      
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('courses')
+          .select('*')
+          .eq('id', courseId)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          setCourse({
+            id: data.id,
+            title: data.title,
+            description: data.description,
+            duration: data.duration,
+            age_group: data.age_group,
+            price: data.price,
+            start_date: data.start_date || '',
+            is_upcoming: data.is_upcoming || false,
+            registration_open: data.registration_open,
+            highlights: (data.highlights as string[]) || [''],
+            curriculum: (data.curriculum as unknown as CurriculumWeek[]) || [{ week: 1, title: '', topics: [''] }],
+            schedule: (data.schedule as unknown as ScheduleItem[]) || [{ day: '', time: '', topic: '' }],
+            faq: (data.faq as unknown as FAQItem[]) || [{ question: '', answer: '' }],
+          });
+        }
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     if (isEditing && isAdmin) {
       fetchCourse();
     }
-  }, [isEditing, isAdmin, courseId]);
-
-  const fetchCourse = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('courses')
-        .select('*')
-        .eq('id', courseId)
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        setCourse({
-          id: data.id,
-          title: data.title,
-          description: data.description,
-          duration: data.duration,
-          age_group: data.age_group,
-          price: data.price,
-          start_date: data.start_date || '',
-          is_upcoming: data.is_upcoming || false,
-          registration_open: data.registration_open,
-          highlights: (data.highlights as string[]) || [''],
-          curriculum: (data.curriculum as unknown as CurriculumWeek[]) || [{ week: 1, title: '', topics: [''] }],
-          schedule: (data.schedule as unknown as ScheduleItem[]) || [{ day: '', time: '', topic: '' }],
-          faq: (data.faq as unknown as FAQItem[]) || [{ question: '', answer: '' }],
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [isEditing, isAdmin, courseId, toast]);
 
   const handleSave = async () => {
     if (!course.id || !course.title) {
