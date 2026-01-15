@@ -37,6 +37,8 @@ export interface Course {
   updated_at: string;
   cardImage: string;
   heroImage: string;
+  card_image_url: string | null;
+  hero_image_url: string | null;
   registeredCount: number;
   verifiedCount: number;
 }
@@ -74,8 +76,10 @@ export function useCourses() {
         schedule: course.schedule as unknown as Schedule,
         faq: course.faq as unknown as FAQItem[],
         registration_open: course.registration_open ?? true,
-        cardImage: courseImages[course.id]?.card || '',
-        heroImage: courseImages[course.id]?.hero || '',
+        cardImage: course.card_image_url || courseImages[course.id]?.card || '',
+        heroImage: course.hero_image_url || courseImages[course.id]?.hero || '',
+        card_image_url: course.card_image_url,
+        hero_image_url: course.hero_image_url,
         registeredCount: counts[course.id]?.registered || 0,
         verifiedCount: counts[course.id]?.verified || 0,
       })) as Course[];
@@ -116,8 +120,10 @@ export function useCourse(courseId: string) {
         schedule: course.schedule as unknown as Schedule,
         faq: course.faq as unknown as FAQItem[],
         registration_open: course.registration_open ?? true,
-        cardImage: courseImages[course.id]?.card || '',
-        heroImage: courseImages[course.id]?.hero || '',
+        cardImage: course.card_image_url || courseImages[course.id]?.card || '',
+        heroImage: course.hero_image_url || courseImages[course.id]?.hero || '',
+        card_image_url: course.card_image_url,
+        hero_image_url: course.hero_image_url,
         registeredCount,
         verifiedCount,
       } as Course;
