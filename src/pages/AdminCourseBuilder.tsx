@@ -15,7 +15,10 @@ import {
   HelpCircle,
   GripVertical,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ImageIcon,
+  Upload,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -74,6 +77,8 @@ interface CourseForm {
   curriculum: CurriculumWeek[];
   schedule: ScheduleItem[];
   faq: FAQItem[];
+  card_image_url: string;
+  hero_image_url: string;
 }
 
 const defaultCourse: CourseForm = {
@@ -90,6 +95,8 @@ const defaultCourse: CourseForm = {
   curriculum: [{ week: 1, title: '', topics: [''] }],
   schedule: [{ day: '', time: '', topic: '' }],
   faq: [{ question: '', answer: '' }],
+  card_image_url: '',
+  hero_image_url: '',
 };
 
 export default function AdminCourseBuilder() {
@@ -103,6 +110,8 @@ export default function AdminCourseBuilder() {
   const [course, setCourse] = useState<CourseForm>(defaultCourse);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(isEditing);
+  const [uploadingCard, setUploadingCard] = useState(false);
+  const [uploadingHero, setUploadingHero] = useState(false);
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -144,6 +153,8 @@ export default function AdminCourseBuilder() {
             curriculum: (data.curriculum as unknown as CurriculumWeek[]) || [{ week: 1, title: '', topics: [''] }],
             schedule: (data.schedule as unknown as ScheduleItem[]) || [{ day: '', time: '', topic: '' }],
             faq: (data.faq as unknown as FAQItem[]) || [{ question: '', answer: '' }],
+            card_image_url: data.card_image_url || '',
+            hero_image_url: data.hero_image_url || '',
           });
         }
       } catch (error: any) {
@@ -191,6 +202,8 @@ export default function AdminCourseBuilder() {
         })) as unknown as Json,
         schedule: course.schedule.filter(s => s.day || s.time || s.topic) as unknown as Json,
         faq: course.faq.filter(f => f.question || f.answer) as unknown as Json,
+        card_image_url: course.card_image_url || null,
+        hero_image_url: course.hero_image_url || null,
       };
 
       if (isEditing) {
@@ -340,6 +353,57 @@ export default function AdminCourseBuilder() {
       ...prev,
       faq: prev.faq.filter((_, i) => i !== index)
     }));
+  };
+
+  // Image Upload
+  const handleImageUpload = async (file: File, type: 'card' | 'hero') => {
+    if (!file) return;
+
+    const isUploading = type === 'card' ? setUploadingCard : setUploadingHero;
+    isUploading(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${course.id || 'new'}-${type}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('course_images')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('course_images')
+        .getPublicUrl(filePath);
+
+      if (type === 'card') {
+        setCourse(prev => ({ ...prev, card_image_url: publicUrl }));
+      } else {
+        setCourse(prev => ({ ...prev, hero_image_url: publicUrl }));
+      }
+
+      toast({
+        title: "Image Uploaded",
+        description: `${type === 'card' ? 'Card' : 'Hero'} image uploaded successfully.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Upload Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      isUploading(false);
+    }
+  };
+
+  const removeImage = (type: 'card' | 'hero') => {
+    if (type === 'card') {
+      setCourse(prev => ({ ...prev, card_image_url: '' }));
+    } else {
+      setCourse(prev => ({ ...prev, hero_image_url: '' }));
+    }
   };
 
   if (loading || !isAdmin) {
@@ -710,7 +774,99 @@ export default function AdminCourseBuilder() {
                 </CardContent>
               </Card>
 
-              {/* Preview Card */}
+              {/* Course Images */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ImageIcon size={20} className="text-primary" />
+                    Course Images
+                  </CardTitle>
+                  <CardDescription>Upload card and hero images</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Card Image */}
+                  <div className="space-y-2">
+                    <Label>Card Image</Label>
+                    <p className="text-xs text-muted-foreground">Displayed on course cards (400x300 recommended)</p>
+                    {course.card_image_url ? (
+                      <div className="relative">
+                        <img 
+                          src={course.card_image_url} 
+                          alt="Card preview" 
+                          className="w-full h-32 object-cover rounded-lg"
+                        />
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2 h-6 w-6"
+                          onClick={() => removeImage('card')}
+                        >
+                          <X size={14} />
+                        </Button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                        {uploadingCard ? (
+                          <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent" />
+                        ) : (
+                          <>
+                            <Upload size={24} className="text-muted-foreground mb-2" />
+                            <span className="text-sm text-muted-foreground">Upload Card Image</span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'card')}
+                          disabled={uploadingCard}
+                        />
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Hero Image */}
+                  <div className="space-y-2">
+                    <Label>Hero Image</Label>
+                    <p className="text-xs text-muted-foreground">Displayed on course detail page (1200x400 recommended)</p>
+                    {course.hero_image_url ? (
+                      <div className="relative">
+                        <img 
+                          src={course.hero_image_url} 
+                          alt="Hero preview" 
+                          className="w-full h-24 object-cover rounded-lg"
+                        />
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2 h-6 w-6"
+                          onClick={() => removeImage('hero')}
+                        >
+                          <X size={14} />
+                        </Button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                        {uploadingHero ? (
+                          <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent" />
+                        ) : (
+                          <>
+                            <Upload size={24} className="text-muted-foreground mb-2" />
+                            <span className="text-sm text-muted-foreground">Upload Hero Image</span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'hero')}
+                          disabled={uploadingHero}
+                        />
+                      </label>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
               <Card>
                 <CardHeader>
                   <CardTitle>Preview</CardTitle>

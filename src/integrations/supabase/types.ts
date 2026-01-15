@@ -59,11 +59,13 @@ export type Database = {
       courses: {
         Row: {
           age_group: string
+          card_image_url: string | null
           created_at: string
           curriculum: Json | null
           description: string
           duration: string
           faq: Json | null
+          hero_image_url: string | null
           highlights: string[] | null
           id: string
           is_upcoming: boolean | null
@@ -76,11 +78,13 @@ export type Database = {
         }
         Insert: {
           age_group: string
+          card_image_url?: string | null
           created_at?: string
           curriculum?: Json | null
           description: string
           duration: string
           faq?: Json | null
+          hero_image_url?: string | null
           highlights?: string[] | null
           id: string
           is_upcoming?: boolean | null
@@ -93,11 +97,13 @@ export type Database = {
         }
         Update: {
           age_group?: string
+          card_image_url?: string | null
           created_at?: string
           curriculum?: Json | null
           description?: string
           duration?: string
           faq?: Json | null
+          hero_image_url?: string | null
           highlights?: string[] | null
           id?: string
           is_upcoming?: boolean | null
