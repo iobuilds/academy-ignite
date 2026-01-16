@@ -13,6 +13,12 @@ export interface FAQItem {
   answer: string;
 }
 
+export interface ScheduleItem {
+  day: string;
+  time: string;
+  topic: string;
+}
+
 export interface Schedule {
   days: string[];
   time: string;
@@ -28,7 +34,7 @@ export interface Course {
   age_group: string;
   highlights: string[];
   curriculum: CurriculumItem[];
-  schedule: Schedule;
+  schedule: Schedule | ScheduleItem[];
   faq: FAQItem[];
   start_date: string | null;
   is_upcoming: boolean;
@@ -72,9 +78,10 @@ export function useCourses() {
 
       return courses.map((course) => ({
         ...course,
-        curriculum: course.curriculum as unknown as CurriculumItem[],
-        schedule: course.schedule as unknown as Schedule,
-        faq: course.faq as unknown as FAQItem[],
+        highlights: (course.highlights as string[]) || [],
+        curriculum: (course.curriculum as unknown as CurriculumItem[]) || [],
+        schedule: course.schedule as unknown as Schedule | ScheduleItem[],
+        faq: (course.faq as unknown as FAQItem[]) || [],
         registration_open: course.registration_open ?? true,
         cardImage: course.card_image_url || courseImages[course.id]?.card || '',
         heroImage: course.hero_image_url || courseImages[course.id]?.hero || '',
@@ -116,9 +123,10 @@ export function useCourse(courseId: string) {
 
       return {
         ...course,
-        curriculum: course.curriculum as unknown as CurriculumItem[],
-        schedule: course.schedule as unknown as Schedule,
-        faq: course.faq as unknown as FAQItem[],
+        highlights: (course.highlights as string[]) || [],
+        curriculum: (course.curriculum as unknown as CurriculumItem[]) || [],
+        schedule: course.schedule as unknown as Schedule | ScheduleItem[],
+        faq: (course.faq as unknown as FAQItem[]) || [],
         registration_open: course.registration_open ?? true,
         cardImage: course.card_image_url || courseImages[course.id]?.card || '',
         heroImage: course.hero_image_url || courseImages[course.id]?.hero || '',

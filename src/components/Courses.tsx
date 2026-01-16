@@ -121,7 +121,7 @@ export default function Courses({ onRegisterClick }: CoursesProps) {
                 </div>
 
                 <ul className="space-y-2 mb-6">
-                  {course.highlights.slice(0, 3).map((highlight, i) => (
+                  {(course.highlights || []).slice(0, 3).map((highlight, i) => (
                     <li key={i} className="flex items-center gap-2 text-sm">
                       <div className="w-1.5 h-1.5 rounded-full bg-accent" />
                       {highlight}

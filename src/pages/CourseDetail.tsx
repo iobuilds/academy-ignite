@@ -136,7 +136,7 @@ export default function CourseDetail() {
               >
                 <h3 className="font-display text-xl font-bold mb-4">What You'll Learn</h3>
                 <ul className="grid sm:grid-cols-2 gap-3">
-                  {course.highlights.map((highlight, i) => (
+                  {(course.highlights || []).map((highlight, i) => (
                     <li key={i} className="flex items-center gap-2">
                       <CheckCircle className="text-accent shrink-0" size={18} />
                       <span>{highlight}</span>
@@ -149,10 +149,14 @@ export default function CourseDetail() {
               <VideoPlaceholder title={`Introduction to ${course.title}`} />
 
               {/* Curriculum */}
-              <CourseCurriculum curriculum={course.curriculum} />
+              {course.curriculum && course.curriculum.length > 0 && (
+                <CourseCurriculum curriculum={course.curriculum} />
+              )}
 
               {/* FAQ */}
-              <CourseFAQ faq={course.faq} />
+              {course.faq && course.faq.length > 0 && (
+                <CourseFAQ faq={course.faq} />
+              )}
             </div>
 
             {/* Sidebar */}

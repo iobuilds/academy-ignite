@@ -1,16 +1,47 @@
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Globe } from 'lucide-react';
-import { Schedule } from '@/hooks/useCourses';
+import { Schedule, ScheduleItem } from '@/hooks/useCourses';
 import { format } from 'date-fns';
 
 interface CourseScheduleProps {
-  schedule: Schedule;
+  schedule: Schedule | ScheduleItem[] | null | undefined;
   startDate: string | null;
   duration: string;
 }
 
 export default function CourseSchedule({ schedule, startDate, duration }: CourseScheduleProps) {
   const formattedStartDate = startDate ? format(new Date(startDate), 'MMMM d, yyyy') : 'TBD';
+
+  // Handle different schedule formats
+  const getScheduleDisplay = () => {
+    if (!schedule) return 'TBD';
+    
+    // Check if it's the old format (object with days array)
+    if ('days' in schedule && Array.isArray(schedule.days)) {
+      return schedule.days.join(' & ');
+    }
+    
+    // New format (array of schedule items)
+    if (Array.isArray(schedule) && schedule.length > 0) {
+      return schedule.map(s => s.day).filter(Boolean).join(' & ') || 'TBD';
+    }
+    
+    return 'TBD';
+  };
+
+  const getTimeDisplay = () => {
+    if (!schedule) return '';
+    
+    if ('time' in schedule && typeof schedule.time === 'string') {
+      return schedule.time;
+    }
+    
+    if (Array.isArray(schedule) && schedule.length > 0) {
+      return schedule[0]?.time || '';
+    }
+    
+    return '';
+  };
 
   return (
     <motion.div
@@ -37,8 +68,10 @@ export default function CourseSchedule({ schedule, startDate, duration }: Course
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Class Schedule</p>
-            <p className="font-medium">{schedule.days.join(' & ')}</p>
-            <p className="text-sm text-muted-foreground">{schedule.time}</p>
+            <p className="font-medium">{getScheduleDisplay()}</p>
+            {getTimeDisplay() && (
+              <p className="text-sm text-muted-foreground">{getTimeDisplay()}</p>
+            )}
           </div>
         </div>
 
