@@ -45,6 +45,7 @@ export interface Course {
   heroImage: string;
   card_image_url: string | null;
   hero_image_url: string | null;
+  preview_video_url: string | null;
   registeredCount: number;
   verifiedCount: number;
 }
@@ -87,6 +88,7 @@ export function useCourses() {
         heroImage: course.hero_image_url || courseImages[course.id]?.hero || '',
         card_image_url: course.card_image_url,
         hero_image_url: course.hero_image_url,
+        preview_video_url: course.preview_video_url || null,
         registeredCount: counts[course.id]?.registered || 0,
         verifiedCount: counts[course.id]?.verified || 0,
       })) as Course[];
@@ -132,6 +134,7 @@ export function useCourse(courseId: string) {
         heroImage: course.hero_image_url || courseImages[course.id]?.hero || '',
         card_image_url: course.card_image_url,
         hero_image_url: course.hero_image_url,
+        preview_video_url: course.preview_video_url || null,
         registeredCount,
         verifiedCount,
       } as Course;
