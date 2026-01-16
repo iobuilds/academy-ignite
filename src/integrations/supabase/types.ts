@@ -69,6 +69,7 @@ export type Database = {
           highlights: string[] | null
           id: string
           is_upcoming: boolean | null
+          preview_video_url: string | null
           price: number
           registration_open: boolean
           schedule: Json | null
@@ -88,6 +89,7 @@ export type Database = {
           highlights?: string[] | null
           id: string
           is_upcoming?: boolean | null
+          preview_video_url?: string | null
           price?: number
           registration_open?: boolean
           schedule?: Json | null
@@ -107,6 +109,7 @@ export type Database = {
           highlights?: string[] | null
           id?: string
           is_upcoming?: boolean | null
+          preview_video_url?: string | null
           price?: number
           registration_open?: boolean
           schedule?: Json | null

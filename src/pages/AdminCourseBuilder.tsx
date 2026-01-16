@@ -18,7 +18,8 @@ import {
   ChevronUp,
   ImageIcon,
   Upload,
-  X
+  X,
+  Video
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -79,6 +80,7 @@ interface CourseForm {
   faq: FAQItem[];
   card_image_url: string;
   hero_image_url: string;
+  preview_video_url: string;
 }
 
 const defaultCourse: CourseForm = {
@@ -97,6 +99,7 @@ const defaultCourse: CourseForm = {
   faq: [{ question: '', answer: '' }],
   card_image_url: '',
   hero_image_url: '',
+  preview_video_url: '',
 };
 
 export default function AdminCourseBuilder() {
@@ -112,6 +115,7 @@ export default function AdminCourseBuilder() {
   const [isLoading, setIsLoading] = useState(isEditing);
   const [uploadingCard, setUploadingCard] = useState(false);
   const [uploadingHero, setUploadingHero] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -155,6 +159,7 @@ export default function AdminCourseBuilder() {
             faq: (data.faq as unknown as FAQItem[]) || [{ question: '', answer: '' }],
             card_image_url: data.card_image_url || '',
             hero_image_url: data.hero_image_url || '',
+            preview_video_url: data.preview_video_url || '',
           });
         }
       } catch (error: any) {
@@ -204,6 +209,7 @@ export default function AdminCourseBuilder() {
         faq: course.faq.filter(f => f.question || f.answer) as unknown as Json,
         card_image_url: course.card_image_url || null,
         hero_image_url: course.hero_image_url || null,
+        preview_video_url: course.preview_video_url || null,
       };
 
       if (isEditing) {
@@ -404,6 +410,48 @@ export default function AdminCourseBuilder() {
     } else {
       setCourse(prev => ({ ...prev, hero_image_url: '' }));
     }
+  };
+
+  // Video Upload
+  const handleVideoUpload = async (file: File) => {
+    if (!file) return;
+
+    setUploadingVideo(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${course.id || 'new'}-preview-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('course_videos')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('course_videos')
+        .getPublicUrl(filePath);
+
+      setCourse(prev => ({ ...prev, preview_video_url: publicUrl }));
+
+      toast({
+        title: "Video Uploaded",
+        description: "Preview video uploaded successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Upload Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingVideo(false);
+    }
+  };
+
+  const removeVideo = () => {
+    setCourse(prev => ({ ...prev, preview_video_url: '' }));
   };
 
   if (loading || !isAdmin) {
@@ -867,6 +915,62 @@ export default function AdminCourseBuilder() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Preview Video */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Video size={20} className="text-primary" />
+                    Preview Video
+                  </CardTitle>
+                  <CardDescription>Upload a preview video for the course</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Video File</Label>
+                    <p className="text-xs text-muted-foreground">MP4, WebM, or MOV (max 100MB recommended)</p>
+                    {course.preview_video_url ? (
+                      <div className="relative">
+                        <video 
+                          src={course.preview_video_url} 
+                          className="w-full h-32 object-cover rounded-lg bg-black"
+                          controls
+                        />
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2 h-6 w-6"
+                          onClick={removeVideo}
+                        >
+                          <X size={14} />
+                        </Button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                        {uploadingVideo ? (
+                          <div className="flex flex-col items-center">
+                            <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent mb-2" />
+                            <span className="text-sm text-muted-foreground">Uploading...</span>
+                          </div>
+                        ) : (
+                          <>
+                            <Video size={24} className="text-muted-foreground mb-2" />
+                            <span className="text-sm text-muted-foreground">Upload Preview Video</span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          accept="video/*"
+                          className="hidden"
+                          onChange={(e) => e.target.files?.[0] && handleVideoUpload(e.target.files[0])}
+                          disabled={uploadingVideo}
+                        />
+                      </label>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle>Preview</CardTitle>

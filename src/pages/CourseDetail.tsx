@@ -146,7 +146,10 @@ export default function CourseDetail() {
               </motion.div>
 
               {/* Sample Video */}
-              <VideoPlaceholder title={`Introduction to ${course.title}`} />
+              <VideoPlaceholder 
+                title={`Introduction to ${course.title}`} 
+                videoUrl={course.preview_video_url}
+              />
 
               {/* Curriculum */}
               {course.curriculum && course.curriculum.length > 0 && (
