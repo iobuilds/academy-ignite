@@ -8,7 +8,7 @@ import {
 import { FAQItem } from '@/hooks/useCourses';
 
 interface CourseFAQProps {
-  faq: FAQItem[];
+  faq: FAQItem[] | null | undefined;
 }
 
 export default function CourseFAQ({ faq }: CourseFAQProps) {
@@ -23,7 +23,7 @@ export default function CourseFAQ({ faq }: CourseFAQProps) {
         Frequently Asked Questions
       </h2>
       <Accordion type="single" collapsible className="space-y-2">
-        {faq.map((item, index) => (
+        {(faq || []).map((item, index) => (
           <AccordionItem
             key={index}
             value={`item-${index}`}

@@ -3,7 +3,7 @@ import { BookOpen, CheckCircle } from 'lucide-react';
 import { CurriculumItem } from '@/hooks/useCourses';
 
 interface CourseCurriculumProps {
-  curriculum: CurriculumItem[];
+  curriculum: CurriculumItem[] | null | undefined;
 }
 
 export default function CourseCurriculum({ curriculum }: CourseCurriculumProps) {
@@ -22,7 +22,7 @@ export default function CourseCurriculum({ curriculum }: CourseCurriculumProps) 
       </div>
 
       <div className="space-y-4">
-        {curriculum.map((week, index) => (
+        {(curriculum || []).map((week, index) => (
           <motion.div
             key={week.week}
             initial={{ opacity: 0, x: -20 }}
@@ -40,7 +40,7 @@ export default function CourseCurriculum({ curriculum }: CourseCurriculumProps) 
                   {week.title}
                 </h3>
                 <ul className="space-y-1">
-                  {week.topics.map((topic, i) => (
+                  {(week.topics || []).map((topic, i) => (
                     <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
                       <CheckCircle size={14} className="text-accent shrink-0" />
                       {topic}
