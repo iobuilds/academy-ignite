@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import logo from '@/assets/logo.png';
 
 export default function Footer() {
@@ -31,10 +32,10 @@ export default function Footer() {
           >
             <h4 className="font-display font-bold mb-4">Quick Links</h4>
             <ul className="space-y-2 text-sm text-primary-foreground/80">
-              <li><a href="#home" className="hover:text-primary-foreground transition-colors">Home</a></li>
-              <li><a href="#courses" className="hover:text-primary-foreground transition-colors">Courses</a></li>
-              <li><a href="#about" className="hover:text-primary-foreground transition-colors">About Us</a></li>
-              <li><a href="#contact" className="hover:text-primary-foreground transition-colors">Contact</a></li>
+              <li><Link to="/" className="hover:text-primary-foreground transition-colors">Home</Link></li>
+              <li><Link to="/courses" className="hover:text-primary-foreground transition-colors">Courses</Link></li>
+              <li><Link to="/about" className="hover:text-primary-foreground transition-colors">About Us</Link></li>
+              <li><Link to="/#contact" className="hover:text-primary-foreground transition-colors">Contact</Link></li>
             </ul>
           </motion.div>
 
@@ -47,9 +48,9 @@ export default function Footer() {
           >
             <h4 className="font-display font-bold mb-4">Our Courses</h4>
             <ul className="space-y-2 text-sm text-primary-foreground/80">
-              <li>IoT and Robotics</li>
-              <li>Embedded Systems Bootcamp</li>
-              <li>Product Development Bootcamp</li>
+              <li><Link to="/courses/iot-robotics" className="hover:text-primary-foreground transition-colors">IoT and Robotics</Link></li>
+              <li><Link to="/courses/embedded-systems" className="hover:text-primary-foreground transition-colors">Embedded Systems Bootcamp</Link></li>
+              <li><Link to="/courses/product-development" className="hover:text-primary-foreground transition-colors">Product Development Bootcamp</Link></li>
             </ul>
           </motion.div>
 
