@@ -174,9 +174,9 @@ export default function CourseDetail() {
                   <span className="text-sm text-muted-foreground">Course Price</span>
                   <div className="flex items-baseline gap-2">
                     <span className="font-display text-4xl font-bold text-primary">
-                      ${course.price}
+                      Rs {course.price}.00
                     </span>
-                    <span className="text-muted-foreground">USD</span>
+                    <span className="text-muted-foreground">LKR</span>
                   </div>
                 </div>
 

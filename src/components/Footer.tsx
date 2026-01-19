@@ -68,11 +68,11 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Phone size={16} />
-                +1 (555) 123-4567
+                +94 72 85 34 197
               </li>
               <li className="flex items-start gap-2">
                 <MapPin size={16} className="mt-0.5" />
-                <span>123 Innovation Way<br />Tech City, TC 12345</span>
+                <span>532/1/E,<br />Gonahena Road, <br />Kadawatha</span>
               </li>
             </ul>
           </motion.div>

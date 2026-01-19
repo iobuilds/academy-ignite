@@ -84,7 +84,7 @@ export default function Hero({ onRegisterClick }: HeroProps) {
             className="inline-flex items-center gap-2 bg-gradient-to-r from-primary/20 to-accent/20 backdrop-blur-sm border border-primary/20 text-primary px-6 py-3 rounded-full mb-8 shadow-lg"
           >
             <Sparkles size={18} className="animate-pulse" />
-            <span className="text-sm font-semibold">🚀 Now Enrolling for 2025 Batches</span>
+            <span className="text-sm font-semibold">🚀 Now Enrolling for 2026 Batches</span>
             <Zap size={16} className="text-accent" />
           </motion.div>
 

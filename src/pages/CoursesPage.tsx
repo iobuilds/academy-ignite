@@ -193,8 +193,8 @@ export default function CoursesPage() {
 
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <span className="text-2xl font-display font-bold text-primary">${course.price}</span>
-                        <span className="text-muted-foreground text-sm ml-1">USD</span>
+                        <span className="text-2xl font-display font-bold text-primary">Rs.{course.price}.00</span>
+                        <span className="text-muted-foreground text-sm ml-1">LKR</span>
                       </div>
                     </div>
 
