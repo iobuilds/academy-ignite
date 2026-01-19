@@ -1,21 +1,38 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, MeshDistortMaterial, Sphere, Box, Torus, Line } from '@react-three/drei';
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, forwardRef } from 'react';
 import * as THREE from 'three';
 
-function CircuitLine({ start, end, color }: { start: [number, number, number]; end: [number, number, number]; color: string }) {
-  const points = useMemo(() => [new THREE.Vector3(...start), new THREE.Vector3(...end)], [start, end]);
-  return <Line points={points} color={color} lineWidth={1.5} opacity={0.6} transparent />;
+interface CircuitLineProps {
+  start: [number, number, number];
+  end: [number, number, number];
+  color: string;
 }
 
-function CircuitNode({ position, size = 0.08 }: { position: [number, number, number]; size?: number }) {
+const CircuitLine = forwardRef<THREE.Group, CircuitLineProps>(({ start, end, color }, ref) => {
+  const points = useMemo(() => [new THREE.Vector3(...start), new THREE.Vector3(...end)], [start, end]);
   return (
-    <mesh position={position}>
+    <group ref={ref}>
+      <Line points={points} color={color} lineWidth={1.5} opacity={0.6} transparent />
+    </group>
+  );
+});
+CircuitLine.displayName = 'CircuitLine';
+
+interface CircuitNodeProps {
+  position: [number, number, number];
+  size?: number;
+}
+
+const CircuitNode = forwardRef<THREE.Mesh, CircuitNodeProps>(({ position, size = 0.08 }, ref) => {
+  return (
+    <mesh ref={ref} position={position}>
       <sphereGeometry args={[size, 16, 16]} />
       <meshStandardMaterial color="#0ea5e9" emissive="#0ea5e9" emissiveIntensity={0.5} />
     </mesh>
   );
-}
+});
+CircuitNode.displayName = 'CircuitNode';
 
 function FloatingShapes() {
   const meshRef1 = useRef<THREE.Mesh>(null);
