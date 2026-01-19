@@ -130,8 +130,8 @@ export default function AboutUs() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <h3 className="font-display text-2xl font-bold mb-2">Embedded Systems Engineer</h3>
-              <p className="text-primary font-semibold text-lg mb-4">at IPbuilds LLC</p>
+              <h3 className="font-display text-2xl font-bold mb-2">Embedded Systems Engineer | Lecturer</h3>
+              <p className="text-primary font-semibold text-lg mb-4">at IO Builds LLC</p>
               <p className="text-muted-foreground leading-relaxed mb-4">
                 With over a decade of experience in embedded systems and product development, our lead instructor brings real-world expertise directly to the classroom. Having worked on projects ranging from consumer electronics to industrial IoT solutions, they understand what it takes to succeed in the industry.
               </p>

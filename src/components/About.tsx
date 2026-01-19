@@ -48,8 +48,8 @@ export default function About() {
                 className="w-full h-full object-cover object-top"
               />
             </div>
-            <h3 className="font-display text-2xl font-bold mb-2">Embedded Systems Engineer</h3>
-            <p className="text-primary font-semibold text-lg">at IPbuilds LLC</p>
+            <h3 className="font-display text-2xl font-bold mb-2">Embedded Systems Engineer | Lecturer</h3>
+            <p className="text-primary font-semibold text-lg">at IO Builds LLC</p>
           </div>
         </motion.div>
 
