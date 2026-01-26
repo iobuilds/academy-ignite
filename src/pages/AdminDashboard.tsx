@@ -20,7 +20,8 @@ import {
   Clock,
   Plus,
   Pencil,
-  Trash2
+  Trash2,
+  Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,6 +57,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { AdminSettings } from '@/components/admin/AdminSettings';
 
 interface Registration {
   id: string;
@@ -445,7 +447,7 @@ export default function AdminDashboard() {
 
           {/* Tabs */}
           <Tabs defaultValue="registrations" className="space-y-6">
-            <TabsList className="grid w-full max-w-lg grid-cols-4">
+            <TabsList className="grid w-full max-w-2xl grid-cols-5">
               <TabsTrigger value="registrations">
                 Registrations
                 {pendingRegistrations.length > 0 && (
@@ -454,6 +456,10 @@ export default function AdminDashboard() {
               </TabsTrigger>
               <TabsTrigger value="courses">Courses</TabsTrigger>
               <TabsTrigger value="users">Users</TabsTrigger>
+              <TabsTrigger value="settings">
+                <Settings size={14} className="mr-1" />
+                Settings
+              </TabsTrigger>
               <TabsTrigger value="builder">
                 <Plus size={14} className="mr-1" />
                 New
@@ -735,6 +741,10 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </div>
+            </TabsContent>
+
+            <TabsContent value="settings" className="space-y-4">
+              <AdminSettings />
             </TabsContent>
           </Tabs>
         </motion.div>
