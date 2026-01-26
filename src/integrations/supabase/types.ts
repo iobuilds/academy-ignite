@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          updated_at: string
+          value: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          updated_at?: string
+          value?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: string | null
+        }
+        Relationships: []
+      }
       coupon_codes: {
         Row: {
           applicable_courses: string[] | null
@@ -217,12 +241,44 @@ export type Database = {
           },
         ]
       }
+      otp_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          mobile_number: string
+          purpose: string
+          verified: boolean | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          mobile_number: string
+          purpose?: string
+          verified?: boolean | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          mobile_number?: string
+          purpose?: string
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string
           display_name: string | null
           id: string
+          is_mobile_verified: boolean | null
+          mobile_number: string | null
           updated_at: string
         }
         Insert: {
@@ -230,6 +286,8 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id: string
+          is_mobile_verified?: boolean | null
+          mobile_number?: string | null
           updated_at?: string
         }
         Update: {
@@ -237,6 +295,8 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          is_mobile_verified?: boolean | null
+          mobile_number?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -315,6 +375,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_otps: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

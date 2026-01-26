@@ -15,7 +15,7 @@ interface AuthContextType {
   isLoading: boolean;
   loading: boolean;
   isAdmin: boolean;
-  signUp: (email: string, password: string, displayName: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, displayName: string, mobileNumber?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -121,15 +121,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []); // Empty dependency array - only run once
 
-  const signUp = async (email: string, password: string, displayName: string) => {
-    const { error } = await supabase.auth.signUp({
+  const signUp = async (email: string, password: string, displayName: string, mobileNumber?: string) => {
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
-        data: { display_name: displayName },
+        data: { display_name: displayName, mobile_number: mobileNumber },
       },
     });
+
+    // If signup successful and we have mobile number, update profile
+    if (!error && data.user && mobileNumber) {
+      await supabase
+        .from('profiles')
+        .update({ 
+          mobile_number: mobileNumber,
+          is_mobile_verified: true 
+        })
+        .eq('id', data.user.id);
+    }
+
     return { error: error as Error | null };
   };
 
