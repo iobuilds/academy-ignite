@@ -12,10 +12,18 @@ interface SMSRequest {
 }
 
 interface NotifyAdminRequest {
-  type: "new_registration";
+  type: "new_registration" | "new_payment";
   user_name: string;
   user_email: string;
   user_mobile: string;
+  course_name?: string;
+}
+
+interface NotifyUserRequest {
+  type: "payment_verified";
+  user_name: string;
+  user_mobile: string;
+  course_name: string;
 }
 
 const generateOTP = (): string => {
@@ -40,7 +48,7 @@ const sendSMS = async (recipient: string, message: string): Promise<boolean> => 
       },
       body: JSON.stringify({
         recipient: recipient,
-        sender_id: "IOBuilds",
+        sender_id: "IO Builds",
         type: "plain",
         message: message,
       }),
@@ -69,15 +77,15 @@ const handler = async (req: Request): Promise<Response> => {
     const action = url.searchParams.get("action");
 
     if (action === "notify_admin") {
-      // Notify admin about new registration
-      const { type, user_name, user_email, user_mobile }: NotifyAdminRequest = await req.json();
+      // Notify admin about new registration or payment
+      const { type, user_name, user_email, user_mobile, course_name }: NotifyAdminRequest = await req.json();
 
       // Get admin mobile number from settings
       const { data: settingData } = await supabase
         .from("app_settings")
         .select("value")
         .eq("key", "admin_mobile_number")
-        .single();
+        .maybeSingle();
 
       const adminMobile = settingData?.value;
       
@@ -89,8 +97,27 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      const message = `New User Registration!\nName: ${user_name}\nEmail: ${user_email}\nMobile: ${user_mobile}`;
+      let message = "";
+      if (type === "new_registration") {
+        message = `New User Registration!\nName: ${user_name}\nEmail: ${user_email}\nMobile: ${user_mobile}`;
+      } else if (type === "new_payment") {
+        message = `New Payment Submitted!\nName: ${user_name}\nEmail: ${user_email}\nMobile: ${user_mobile}\nCourse: ${course_name}`;
+      }
+
       const sent = await sendSMS(adminMobile, message);
+
+      return new Response(
+        JSON.stringify({ success: sent }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (action === "notify_user") {
+      // Notify user about payment verification
+      const { type, user_name, user_mobile, course_name }: NotifyUserRequest = await req.json();
+
+      const message = `Hi ${user_name}! Great news - your payment for "${course_name}" has been verified. You now have full access to your course. Start learning at IO Builds Academy!`;
+      const sent = await sendSMS(user_mobile, message);
 
       return new Response(
         JSON.stringify({ success: sent }),

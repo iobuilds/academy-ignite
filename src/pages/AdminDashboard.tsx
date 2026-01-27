@@ -207,13 +207,31 @@ export default function AdminDashboard() {
           .eq('registration_id', id);
       }
 
+      // Notify user via SMS when payment is verified
+      if (verified && reg) {
+        let formattedNumber = reg.phone.replace(/\D/g, '');
+        if (!formattedNumber.startsWith('94')) {
+          formattedNumber = '94' + formattedNumber.replace(/^0/, '');
+        }
+
+        const course = courseStats.find(c => c.id === reg.course);
+        await supabase.functions.invoke('send-sms?action=notify_user', {
+          body: {
+            type: 'payment_verified',
+            user_name: reg.name,
+            user_mobile: formattedNumber,
+            course_name: course?.title || reg.course,
+          },
+        });
+      }
+
       setRegistrations(prev =>
         prev.map(r => r.id === id ? { ...r, payment_verified: verified } : r)
       );
 
       toast({
         title: verified ? "Payment Verified" : "Payment Unverified",
-        description: `Registration has been ${verified ? 'verified' : 'unverified'}.`,
+        description: `Registration has been ${verified ? 'verified' : 'unverified'}.${verified ? ' User notified via SMS.' : ''}`,
       });
     } catch (error: any) {
       toast({
