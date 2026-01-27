@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCourses } from '@/hooks/useCourses';
 import { useValidateCoupon, calculateDiscount } from '@/hooks/useCoupon';
+import { InlineAuth } from '@/components/auth/InlineAuth';
 
 interface RegistrationModalProps {
   isOpen: boolean;
@@ -264,21 +265,8 @@ export default function RegistrationModal({ isOpen, onClose, preselectedCourse }
             </p>
 
             {!user && (
-              <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 mb-6">
-                <p className="text-sm text-accent font-medium">
-                  Please sign in or create an account first to register for a course.
-                </p>
-                <Button
-                  variant="hero"
-                  size="sm"
-                  className="mt-3"
-                  onClick={() => {
-                    onClose();
-                    navigate('/auth');
-                  }}
-                >
-                  Sign In / Sign Up
-                </Button>
+              <div className="border border-border rounded-lg p-4 mb-6">
+                <InlineAuth onSuccess={() => {}} />
               </div>
             )}
 
