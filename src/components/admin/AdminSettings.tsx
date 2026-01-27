@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { BankAccountManager } from './BankAccountManager';
 
 export function AdminSettings() {
   const [adminMobile, setAdminMobile] = useState('');
@@ -71,44 +72,48 @@ export function AdminSettings() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Notification Settings</CardTitle>
-        <CardDescription>
-          Configure admin notifications for new user registrations
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="admin-mobile">Admin Mobile Number</Label>
-          <p className="text-sm text-muted-foreground">
-            This number will receive SMS notifications when new users register
-          </p>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-              <Input
-                id="admin-mobile"
-                type="tel"
-                placeholder="07X XXX XXXX"
-                className="pl-10"
-                value={adminMobile}
-                onChange={(e) => setAdminMobile(e.target.value)}
-              />
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Notification Settings</CardTitle>
+          <CardDescription>
+            Configure admin notifications for new user registrations
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="admin-mobile">Admin Mobile Number</Label>
+            <p className="text-sm text-muted-foreground">
+              This number will receive SMS notifications when new users register
+            </p>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                <Input
+                  id="admin-mobile"
+                  type="tel"
+                  placeholder="07X XXX XXXX"
+                  className="pl-10"
+                  value={adminMobile}
+                  onChange={(e) => setAdminMobile(e.target.value)}
+                />
+              </div>
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving ? (
+                  <Loader2 className="animate-spin" size={18} />
+                ) : (
+                  <>
+                    <Save size={18} />
+                    Save
+                  </>
+                )}
+              </Button>
             </div>
-            <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? (
-                <Loader2 className="animate-spin" size={18} />
-              ) : (
-                <>
-                  <Save size={18} />
-                  Save
-                </>
-              )}
-            </Button>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <BankAccountManager />
+    </div>
   );
 }
