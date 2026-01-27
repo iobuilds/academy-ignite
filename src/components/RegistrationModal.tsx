@@ -19,6 +19,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useCourses } from '@/hooks/useCourses';
 import { useValidateCoupon, calculateDiscount } from '@/hooks/useCoupon';
 import { InlineAuth } from '@/components/auth/InlineAuth';
+import { PaymentAccountsDisplay } from '@/components/PaymentAccountsDisplay';
 
 interface RegistrationModalProps {
   isOpen: boolean;
@@ -380,10 +381,13 @@ export default function RegistrationModal({ isOpen, onClose, preselectedCourse }
                 </div>
               )}
 
-              {/* Bank Transfer Slip Upload */}
+              {/* Payment Account Details & Bank Transfer Slip Upload */}
               {formData.course && user && (
-                <div className="space-y-2">
-                  <Label>Bank Transfer Slip *</Label>
+                <div className="space-y-4">
+                  <PaymentAccountsDisplay />
+                  
+                  <div className="space-y-2">
+                    <Label>Bank Transfer Slip *</Label>
                   <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
                     <input
                       ref={fileInputRef}
@@ -420,6 +424,7 @@ export default function RegistrationModal({ isOpen, onClose, preselectedCourse }
                     <p className="text-xs text-muted-foreground mt-2">
                       Upload your bank transfer receipt (Image or PDF, max 5MB)
                     </p>
+                    </div>
                   </div>
                 </div>
               )}
