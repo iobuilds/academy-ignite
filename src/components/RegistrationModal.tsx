@@ -190,6 +190,22 @@ export default function RegistrationModal({ isOpen, onClose, preselectedCourse }
       if (emailError) {
         console.error('Email error:', emailError);
       }
+
+      // Notify admin about new payment submission
+      let formattedNumber = formData.phone.replace(/\D/g, '');
+      if (!formattedNumber.startsWith('94')) {
+        formattedNumber = '94' + formattedNumber.replace(/^0/, '');
+      }
+      
+      await supabase.functions.invoke('send-sms?action=notify_admin', {
+        body: {
+          type: 'new_payment',
+          user_name: formData.name,
+          user_email: formData.email,
+          user_mobile: formattedNumber,
+          course_name: selectedCourse?.title || formData.course,
+        },
+      });
       
       toast.success('Registration submitted! Your payment is pending verification.');
       
