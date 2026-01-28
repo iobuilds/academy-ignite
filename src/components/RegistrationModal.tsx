@@ -61,11 +61,32 @@ export default function RegistrationModal({ isOpen, onClose, preselectedCourse }
     }
   }, [preselectedCourse]);
 
-  // Pre-fill email if user is logged in
+  // Pre-fill user data from profile when logged in
   useEffect(() => {
-    if (user?.email) {
-      setFormData(prev => ({ ...prev, email: user.email || '' }));
-    }
+    const fetchUserProfile = async () => {
+      if (user?.id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name, mobile_number')
+          .eq('id', user.id)
+          .single();
+        
+        let phone = profile?.mobile_number || '';
+        // Format phone for display (remove country code if present)
+        if (phone.startsWith('94')) {
+          phone = '0' + phone.slice(2);
+        }
+        
+        setFormData(prev => ({
+          ...prev,
+          name: profile?.display_name || '',
+          email: user.email || '',
+          phone: phone,
+        }));
+      }
+    };
+    
+    fetchUserProfile();
   }, [user]);
 
   const selectedCourse = courses?.find(c => c.id === formData.course);
